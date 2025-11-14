@@ -52,6 +52,23 @@ class TransfuserFeatureBuilder(AbstractFeatureBuilder):
 
         return features
 
+    def compute_rear_features(self, agent_input: AgentInput) -> Dict[str, torch.Tensor]:
+        """Inherited, see superclass."""
+        features = {}
+
+        features["camera_feature"] = self._get_rear_camera_feature(agent_input)
+        if not self._config.latent:
+            features["lidar_feature"] = self._get_lidar_feature(agent_input)
+        features["status_feature"] = torch.concatenate(
+            [
+                torch.tensor(agent_input.ego_statuses[-1].driving_command, dtype=torch.float32),
+                torch.tensor(agent_input.ego_statuses[-1].ego_velocity, dtype=torch.float32),
+                torch.tensor(agent_input.ego_statuses[-1].ego_acceleration, dtype=torch.float32),
+            ],
+        )
+
+        return features
+
     def _get_camera_feature(self, agent_input: AgentInput) -> torch.Tensor:
         """
         Extract stitched camera from AgentInput
@@ -68,6 +85,26 @@ class TransfuserFeatureBuilder(AbstractFeatureBuilder):
 
         # stitch l0, f0, r0 images
         stitched_image = np.concatenate([l0, f0, r0], axis=1)
+        resized_image = cv2.resize(stitched_image, (1024, 256))
+        tensor_image = transforms.ToTensor()(resized_image)
+
+        return tensor_image
+    
+    def _get_rear_camera_feature(self, agent_input: AgentInput) -> torch.Tensor:
+        """
+        Extract stitched camera from AgentInput
+        :param agent_input: input dataclass
+        :return: stitched front view image as torch tensor
+        """
+        cameras = agent_input.cameras[-1]
+
+        # Crop to ensure 4:1 aspect ratio
+        l2 = cameras.cam_l2.image[28:-28, 416:-416]
+        b0 = cameras.cam_b0.image[28:-28]
+        r2 = cameras.cam_r2.image[28:-28, 416:-416]
+
+        # stitch l0, f0, r0 images
+        stitched_image = np.concatenate([l2, b0, r2], axis=1)
         resized_image = cv2.resize(stitched_image, (1024, 256))
         tensor_image = transforms.ToTensor()(resized_image)
 

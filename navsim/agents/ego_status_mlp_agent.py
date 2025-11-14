@@ -47,8 +47,9 @@ class TrajectoryTargetBuilder(AbstractTargetBuilder):
 
     def compute_targets(self, scene: Scene) -> Dict[str, torch.Tensor]:
         """Inherited, see superclass."""
-        future_trajectory = scene.get_future_trajectory(num_trajectory_frames=self._trajectory_sampling.num_poses)
-        return {"trajectory": torch.tensor(future_trajectory.poses)}
+        # future_trajectory = scene.get_future_trajectory(num_trajectory_frames=self._trajectory_sampling.num_poses)
+        history_trajectory = scene.get_reverse_history_trajectory(num_trajectory_frames=self._trajectory_sampling.num_poses)
+        return {"trajectory": torch.tensor(history_trajectory.poses)}
 
 
 class EgoStatusMLPAgent(AbstractAgent):
@@ -99,6 +100,10 @@ class EgoStatusMLPAgent(AbstractAgent):
         self.load_state_dict({k.replace("agent.", ""): v for k, v in state_dict.items()})
 
     def get_sensor_config(self) -> SensorConfig:
+        """Inherited, see superclass."""
+        return SensorConfig.build_no_sensors()
+    
+    def get_rear_sensor_config(self) -> SensorConfig:
         """Inherited, see superclass."""
         return SensorConfig.build_no_sensors()
 

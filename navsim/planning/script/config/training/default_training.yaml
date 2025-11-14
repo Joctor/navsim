@@ -36,7 +36,7 @@ trainer:
     limit_train_batches: 1.0  # how much of training dataset to check (float = fraction, int = num_batches)
     limit_val_batches: 1.0  # how much of validation dataset to check (float = fraction, int = num_batches)
 
-    accelerator: gpu  # distribution method
+    accelerator: cpu  # distribution method
     strategy: ddp
     precision: 16-mixed  # floating point precision
     num_nodes: 1  # Number of nodes used for training

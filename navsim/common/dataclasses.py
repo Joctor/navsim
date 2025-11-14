@@ -366,7 +366,7 @@ class Scene:
         start_frame_idx = self.scene_metadata.num_history_frames - 1
 
         global_ego_poses = []
-        for frame_idx in range(start_frame_idx, start_frame_idx + num_trajectory_frames + 1):
+        for frame_idx in range(start_frame_idx, start_frame_idx + num_trajectory_frames + 1): # 3~13帧
             global_ego_poses.append(self.frames[frame_idx].ego_status.ego_pose)
 
         local_ego_poses = convert_absolute_to_relative_se2_array(
@@ -406,6 +406,35 @@ class Scene:
                 interval_length=NAVSIM_INTERVAL_LENGTH,
             ),
         )
+    
+    def get_reverse_history_trajectory(self, num_trajectory_frames: Optional[int] = None) -> Trajectory:
+        """
+        Extracts past trajectory of ego vehicles in local coordinates (ie. ego rear-axle).
+        :param num_trajectory_frames: optional number frames to extract poses, defaults to None
+        :return: trajectory dataclass
+        """
+
+        if num_trajectory_frames is None:
+            num_trajectory_frames = self.scene_metadata.num_history_frames
+
+        global_ego_poses = [] # 0~3帧
+        for frame_idx in range(num_trajectory_frames):
+            global_ego_poses.append(self.frames[frame_idx].ego_status.ego_pose)
+
+        # origin的改变导致其他点会跟随他相对发生变化
+        origin = StateSE2(*global_ego_poses[-1])
+
+        local_ego_poses = convert_absolute_to_relative_se2_array(origin, np.array(global_ego_poses, dtype=np.float64))
+
+        local_ego_poses = local_ego_poses[::-1].copy()
+
+        return Trajectory(
+            local_ego_poses,
+            TrajectorySampling(
+                num_poses=len(local_ego_poses),
+                interval_length=NAVSIM_INTERVAL_LENGTH,
+            ),
+        )
 
     def get_agent_input(self) -> AgentInput:
         """
@@ -431,6 +460,37 @@ class Scene:
             )
             cameras.append(self.frames[frame_idx].cameras)
             lidars.append(self.frames[frame_idx].lidar)
+
+        return AgentInput(ego_statuses, cameras, lidars)
+
+    def get_reverse_agent_input(self) -> AgentInput:
+        """
+        Extracts agents input dataclass (without privileged information) from scene.
+        :return: agent input dataclass
+        """
+
+        local_ego_poses = self.get_future_trajectory().poses
+        ego_statuses: List[EgoStatus] = []
+        cameras: List[Cameras] = []
+        lidars: List[Lidar] = []
+
+        # 未来有这么多帧，倒着看
+        for frame_idx in reversed(range(self.scene_metadata.num_future_frames)):
+            # 从历史帧的最后一帧开始加
+            # 为啥只有第三帧有camera数据
+            frame_ego_status = self.frames[self.scene_metadata.num_history_frames + frame_idx].ego_status
+
+            ego_statuses.append(
+                EgoStatus(
+                    ego_pose=local_ego_poses[frame_idx],
+                    ego_velocity=frame_ego_status.ego_velocity,
+                    ego_acceleration=frame_ego_status.ego_acceleration,
+                    driving_command=frame_ego_status.driving_command,
+                )
+            )
+            cameras.append(self.frames[self.scene_metadata.num_history_frames + frame_idx].cameras)
+            lidars.append(self.frames[self.scene_metadata.num_history_frames + frame_idx].lidar)
+        # [x_0, x_1,...], x_0是距离原点最远的，即未来帧的最后一帧，倒过来之后认为是第一帧
 
         return AgentInput(ego_statuses, cameras, lidars)
 

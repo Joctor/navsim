@@ -79,8 +79,11 @@ def plot_bev_with_agent(scene: Scene, agent: AbstractAgent) -> Tuple[plt.Figure,
     :return: figure and ax object of matplotlib
     """
 
-    human_trajectory = scene.get_future_trajectory()
-    agent_trajectory = agent.compute_trajectory(scene.get_agent_input())
+    # 倒着画history轨迹
+    human_trajectory = scene.get_reverse_history_trajectory()
+    #human_trajectory = scene.get_future_trajectory()
+
+    agent_trajectory = agent.compute_trajectory(scene.get_reverse_agent_input())
 
     frame_idx = scene.scene_metadata.num_history_frames - 1
     fig, ax = plt.subplots(1, 1, figsize=BEV_PLOT_CONFIG["figure_size"])

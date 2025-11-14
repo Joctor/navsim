@@ -28,6 +28,7 @@ def build_datasets(cfg: DictConfig, agent: AbstractAgent) -> Tuple[Dataset, Data
     :return: tuple for training and validation dataset
     """
     train_scene_filter: SceneFilter = instantiate(cfg.train_test_split.scene_filter)
+
     if train_scene_filter.log_names is not None:
         train_scene_filter.log_names = [
             log_name for log_name in train_scene_filter.log_names if log_name in cfg.train_logs
@@ -44,11 +45,13 @@ def build_datasets(cfg: DictConfig, agent: AbstractAgent) -> Tuple[Dataset, Data
     data_path = Path(cfg.navsim_log_path)
     original_sensor_path = Path(cfg.original_sensor_path)
 
+    # 为什么rear都没改camera数据没进来
     train_scene_loader = SceneLoader(
         original_sensor_path=original_sensor_path,
         data_path=data_path,
         scene_filter=train_scene_filter,
         sensor_config=agent.get_sensor_config(),
+        # sensor_config=agent.get_rear_sensor_config(),
     )
 
     val_scene_loader = SceneLoader(
@@ -56,7 +59,22 @@ def build_datasets(cfg: DictConfig, agent: AbstractAgent) -> Tuple[Dataset, Data
         data_path=data_path,
         scene_filter=val_scene_filter,
         sensor_config=agent.get_sensor_config(),
+        # sensor_config=agent.get_rear_sensor_config(),
     )
+
+    # train_scene_loader = SceneLoader(
+    #     original_sensor_path=original_sensor_path,
+    #     data_path=data_path,
+    #     scene_filter=train_scene_filter,
+    #     sensor_config=agent.get_rear_sensor_config(),
+    # )
+
+    # val_scene_loader = SceneLoader(
+    #     original_sensor_path=original_sensor_path,
+    #     data_path=data_path,
+    #     scene_filter=val_scene_filter,
+    #     sensor_config=agent.get_rear_sensor_config(),
+    # )
 
     train_data = Dataset(
         scene_loader=train_scene_loader,
@@ -83,7 +101,7 @@ def main(cfg: DictConfig) -> None:
     Main entrypoint for training an agent.
     :param cfg: omegaconf dictionary
     """
-
+    
     pl.seed_everything(cfg.seed, workers=True)
     logger.info(f"Global Seed set to {cfg.seed}")
 

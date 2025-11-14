@@ -190,6 +190,9 @@ class Dataset(torch.utils.data.Dataset):
         """
 
         scene = self._scene_loader.get_scene_from_token(token)
+
+        # 改reverse
+        # agent_input = scene.get_reverse_agent_input()
         agent_input = scene.get_agent_input()
 
         metadata = scene.scene_metadata
@@ -199,11 +202,13 @@ class Dataset(torch.utils.data.Dataset):
         for builder in self._feature_builders:
             data_dict_path = token_path / (builder.get_unique_name() + ".gz")
             data_dict = builder.compute_features(agent_input)
+            # data_dict = builder.compute_rear_features(agent_input)
             dump_feature_target_to_pickle(data_dict_path, data_dict)
 
         for builder in self._target_builders:
             data_dict_path = token_path / (builder.get_unique_name() + ".gz")
             data_dict = builder.compute_targets(scene)
+            # data_dict = builder.compute_rear_features(agent_input)
             dump_feature_target_to_pickle(data_dict_path, data_dict)
 
         self._valid_cache_paths[token] = token_path
@@ -251,6 +256,8 @@ class Dataset(torch.utils.data.Dataset):
                 """
             )
 
+        #tokens_to_cache = ['ca9e7281adce5212']
+
         for token in tqdm(tokens_to_cache, desc="Caching Dataset"):
             self._cache_scene_with_token(token)
 
@@ -280,8 +287,10 @@ class Dataset(torch.utils.data.Dataset):
         else:
             scene = self._scene_loader.get_scene_from_token(self._scene_loader.tokens[idx])
             agent_input = scene.get_agent_input()
+            # agent_input = scene.get_reverse_agent_input()
             for builder in self._feature_builders:
                 features.update(builder.compute_features(agent_input))
+                # features.update(builder.compute_rear_features(agent_input))
             for builder in self._target_builders:
                 targets.update(builder.compute_targets(scene))
 

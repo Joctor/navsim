@@ -32,6 +32,12 @@ class AbstractAgent(torch.nn.Module, ABC):
         """
         :return: Dataclass defining the sensor configuration for lidar and cameras.
         """
+    
+    @abstractmethod
+    def get_rear_sensor_config(self) -> SensorConfig:
+        """
+        :return: Dataclass defining the rear sensor configuration for lidar and cameras.
+        """
 
     @abstractmethod
     def initialize(self) -> None:

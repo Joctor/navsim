@@ -58,7 +58,7 @@ class TransfuserAgent(AbstractAgent):
     def get_sensor_config(self) -> SensorConfig:
         """Inherited, see superclass."""
         # NOTE: Transfuser only uses current frame (with index 3 by default)
-        history_steps = [3]
+        history_steps = True
         return SensorConfig(
             cam_f0=history_steps,
             cam_l0=history_steps,
@@ -68,6 +68,22 @@ class TransfuserAgent(AbstractAgent):
             cam_r1=False,
             cam_r2=False,
             cam_b0=False,
+            lidar_pc=history_steps if not self._config.latent else False,
+        )
+
+    def get_rear_sensor_config(self) -> SensorConfig:
+        """Inherited, see superclass."""
+        # NOTE: Transfuser only uses current frame (with index 3 by default)
+        history_steps = True
+        return SensorConfig(
+            cam_f0=False,
+            cam_l0=False,
+            cam_l1=False,
+            cam_l2=history_steps,
+            cam_r0=False,
+            cam_r1=False,
+            cam_r2=history_steps,
+            cam_b0=history_steps,
             lidar_pc=history_steps if not self._config.latent else False,
         )
 

@@ -26,6 +26,14 @@ class AbstractFeatureBuilder:
         One FeatureBuilder can return a dict with multiple FeatureTensors.
         """
 
+    @abstractmethod
+    def compute_rear_features(self, agent_input: AgentInput) -> Dict[str, Tensor]:
+        """
+        Computes features from the AgentInput object, i.e., without access to ground-truth.
+        Outputs a dictionary where each item has a unique identifier and maps to a single feature tensor.
+        One FeatureBuilder can return a dict with multiple FeatureTensors.
+        """
+
 
 class AbstractTargetBuilder:
     def __init__(self):

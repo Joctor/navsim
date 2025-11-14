@@ -27,10 +27,17 @@ class ConstantVelocityAgent(AbstractAgent):
     def get_sensor_config(self) -> SensorConfig:
         """Inherited, see superclass."""
         return SensorConfig.build_no_sensors()
+    
+    def get_rear_sensor_config(self) -> SensorConfig:
+        """Inherited, see superclass."""
+        return SensorConfig.build_no_sensors()
 
     def compute_trajectory(self, agent_input: AgentInput) -> Trajectory:
         """Inherited, see superclass."""
 
+        # 本身拿到history的最后一帧的速度
+        # 现在倒开，从未来的最后一帧开始动，到最近的一帧
+        # 所以应该拿最近的一帧的速度，不变
         ego_velocity_2d = agent_input.ego_statuses[-1].ego_velocity
         ego_speed = (ego_velocity_2d**2).sum(-1) ** 0.5
 
@@ -41,6 +48,8 @@ class ConstantVelocityAgent(AbstractAgent):
         poses = np.array(
             [[(time_idx + 1) * dt * ego_speed, 0.0, 0.0] for time_idx in range(num_poses)],
             dtype=np.float32,
-        )
+        ) 
+
+        poses = poses * -1
 
         return Trajectory(poses, self._trajectory_sampling)

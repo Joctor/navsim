@@ -1,4 +1,4 @@
-TRAIN_TEST_SPLIT=navtrain
+TRAIN_TEST_SPLIT=mini
 
 python $NAVSIM_DEVKIT_ROOT/navsim/planning/script/run_training.py \
 agent=transfuser_agent \
